@@ -39,7 +39,11 @@ const Tree = ({
           <span className="text-ink-weak">
             {node.type === "folder" ? "📁" : "📄"}
           </span>
-          <a className="truncate text-ink underline-offset-4 hover:underline" href={node.url} rel="noreferrer" target="_blank">
+          <a
+            className="truncate text-ink underline-offset-4 hover:underline"
+            href={node.url}
+            rel="noreferrer"
+            target="_blank">
             {node.name}
           </a>
           <button
@@ -52,7 +56,13 @@ const Tree = ({
           </button>
         </div>
         {node.children && node.children.length > 0 ? (
-          <Tree favorites={favorites} nodes={node.children} depth={depth + 1} onToggleFavorite={onToggleFavorite} isDark={isDark} />
+          <Tree
+            favorites={favorites}
+            nodes={node.children}
+            depth={depth + 1}
+            onToggleFavorite={onToggleFavorite}
+            isDark={isDark}
+          />
         ) : null}
       </li>
     ))}
@@ -178,7 +188,10 @@ function IndexPopup() {
         const storedFavorites = localStorage.getItem("docstree:favorites")
         if (storedFavorites) {
           try {
-            const parsed = JSON.parse(storedFavorites) as Record<string, TreeNode>
+            const parsed = JSON.parse(storedFavorites) as Record<
+              string,
+              TreeNode
+            >
             setFavorites(parsed)
           } catch {
             // ignore parse errors
@@ -201,7 +214,10 @@ function IndexPopup() {
     }
   }, [theme])
 
-  const favoriteSet = useMemo(() => new Set(Object.keys(favorites)), [favorites])
+  const favoriteSet = useMemo(
+    () => new Set(Object.keys(favorites)),
+    [favorites]
+  )
 
   const toggleFavorite = (node: TreeNode) => {
     setFavorites((prev) => {
@@ -228,8 +244,11 @@ function IndexPopup() {
         .map((node) => {
           const nameMatch = node.name.toLowerCase().includes(q)
           if (nameMatch) return node
-          const filteredChildren = node.children ? filterNodes(node.children) : []
-          if (filteredChildren.length > 0) return { ...node, children: filteredChildren }
+          const filteredChildren = node.children
+            ? filterNodes(node.children)
+            : []
+          if (filteredChildren.length > 0)
+            return { ...node, children: filteredChildren }
           return null
         })
         .filter(Boolean) as TreeNode[]
@@ -272,7 +291,7 @@ function IndexPopup() {
   }
 
   return (
-    <div className="min-w-[360px] max-w-sm space-y-4 rounded-2xl bg-surface p-5 text-ink shadow-pop ring-1 ring-border">
+    <div className="min-w-[360px] max-w-sm space-y-4 bg-surface p-5 text-ink shadow-pop ring-1 ring-border">
       <header className="relative">
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase tracking-[0.2em] text-ink-weak">
@@ -409,11 +428,7 @@ function IndexPopup() {
         data-testid="drive-tree">
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
           <span>Drive files (live)</span>
-          {loading ? (
-            <span className="text-amber-200">Loading...</span>
-          ) : (
-            <span>{flattenFiltered.length} items</span>
-          )}
+          {!loading && <span>{flattenFiltered.length} items</span>}
         </div>
         <div className="mt-3 space-y-2">
           {!authToken && (
@@ -421,11 +436,38 @@ function IndexPopup() {
               Sign in to load your Drive files.
             </p>
           )}
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <svg
+                className="h-6 w-6 animate-spin text-ink-weak"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            </div>
+          )}
           {authToken && !loading && driveFiles.length === 0 ? (
             <p className="text-sm text-ink-weak">No files returned yet.</p>
           ) : null}
-          {filteredTree.length > 0 ? (
-            <Tree favorites={favoriteSet} isDark={isDark} nodes={filteredTree} onToggleFavorite={toggleFavorite} />
+          {!loading && filteredTree.length > 0 ? (
+            <Tree
+              favorites={favoriteSet}
+              isDark={isDark}
+              nodes={filteredTree}
+              onToggleFavorite={toggleFavorite}
+            />
           ) : null}
         </div>
       </section>
