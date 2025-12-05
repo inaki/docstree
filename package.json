@@ -27,6 +27,12 @@
     "postcss": "^8.4.35"
   },
   "manifest": {
+    "icons": {
+      "16": "assets/icon.png",
+      "32": "assets/icon.png",
+      "48": "assets/icon.png",
+      "128": "assets/icon.png"
+    },
     "permissions": [
       "identity"
     ],
