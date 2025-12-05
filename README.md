@@ -1,4 +1,4 @@
-# Docstree
+# Docstree <img src="assets/icon.png" alt="Docstree icon" width="28" height="28" style="vertical-align: middle;" />
 
 Docstree is a Manifest V3 browser extension that signs in with Google and shows your Drive (My Drive and Shared Drives) as a clean, collapsible tree. It is built with React and Plasmo for quick iteration and open-source contributions.
 
