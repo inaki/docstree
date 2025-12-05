@@ -14,18 +14,40 @@ type TreeNode = {
   id: string
   name: string
   type: "folder" | "file"
+  url: string
   children?: TreeNode[]
 }
 
-const Tree = ({ nodes, depth = 0 }: { nodes: TreeNode[]; depth?: number }) => (
-  <ul className={`space-y-2 border-l border-slate-800 pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
+const Tree = ({
+  nodes,
+  depth = 0,
+  isDark
+}: {
+  nodes: TreeNode[]
+  depth?: number
+  isDark: boolean
+}) => (
+  <ul
+    className={`space-y-2 border-l border-slate-800 pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
     {nodes.map((node) => (
       <li key={node.id} className="space-y-1">
-        <div className="flex items-center gap-2 text-sm font-medium text-slate-100">
-          <span className="text-slate-500">{node.type === "folder" ? "📁" : "📄"}</span>
-          <span>{node.name}</span>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <span className="text-slate-500">
+            {node.type === "folder" ? "📁" : "📄"}
+          </span>
+          <a
+            className={`truncate underline-offset-4 hover:underline ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}
+            href={node.url}
+            rel="noreferrer"
+            target="_blank">
+            {node.name}
+          </a>
         </div>
-        {node.children && node.children.length > 0 ? <Tree nodes={node.children} depth={depth + 1} /> : null}
+        {node.children && node.children.length > 0 ? (
+          <Tree nodes={node.children} depth={depth + 1} />
+        ) : null}
       </li>
     ))}
   </ul>
@@ -40,6 +62,8 @@ function IndexPopup() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initializingAuth, setInitializingAuth] = useState(true)
+  const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const isDark = theme === "dark"
 
   const tree = useMemo(() => {
     const rootId = selectedDriveId || "root"
@@ -49,15 +73,23 @@ function IndexPopup() {
     const getType = (mime?: string): "folder" | "file" =>
       mime === "application/vnd.google-apps.folder" ? "folder" : "file"
 
+    const buildUrl = (id: string, type: "folder" | "file") =>
+      type === "folder"
+        ? `https://drive.google.com/drive/folders/${id}`
+        : `https://drive.google.com/file/d/${id}/view`
+
     driveFiles.forEach((file) => {
+      const nodeType = getType(file.mimeType)
       nodes[file.id] = {
         id: file.id,
         name: file.name,
-        type: getType(file.mimeType),
+        type: nodeType,
+        url: buildUrl(file.id, nodeType),
         children: []
       }
 
-      const parents = file.parents && file.parents.length > 0 ? file.parents : []
+      const parents =
+        file.parents && file.parents.length > 0 ? file.parents : []
       const effectiveParents = parents.length > 0 ? parents : [rootId]
       effectiveParents.forEach((parentId) => {
         if (!childrenMap[parentId]) childrenMap[parentId] = []
@@ -85,8 +117,11 @@ function IndexPopup() {
         .map((node) => {
           const nameMatch = node.name.toLowerCase().includes(q)
           if (nameMatch) return node
-          const filteredChildren = node.children ? filterNodes(node.children) : []
-          if (filteredChildren.length > 0) return { ...node, children: filteredChildren }
+          const filteredChildren = node.children
+            ? filterNodes(node.children)
+            : []
+          if (filteredChildren.length > 0)
+            return { ...node, children: filteredChildren }
           return null
         })
         .filter(Boolean) as TreeNode[]
@@ -114,7 +149,10 @@ function IndexPopup() {
       setLoading(true)
       setError(null)
       try {
-        const files = await listDriveFiles(authToken, selectedDriveId || undefined)
+        const files = await listDriveFiles(
+          authToken,
+          selectedDriveId || undefined
+        )
         setDriveFiles(files)
       } catch (err) {
         setError((err as Error).message)
@@ -152,6 +190,10 @@ function IndexPopup() {
         if (storedDrive) {
           setSelectedDriveId(storedDrive === "my-drive" ? null : storedDrive)
         }
+        const storedTheme = localStorage.getItem("docstree:theme")
+        if (storedTheme === "dark" || storedTheme === "light") {
+          setTheme(storedTheme)
+        }
       } catch (err) {
         // no cached token, ignore
       } finally {
@@ -185,23 +227,65 @@ function IndexPopup() {
   }
 
   return (
-    <div className="min-w-[360px] max-w-sm space-y-4 rounded-2xl bg-slate-900 p-5 text-slate-100 shadow-xl">
+    <div
+      className={`min-w-[360px] max-w-sm space-y-4 rounded-2xl p-5 shadow-xl ${
+        isDark
+          ? "bg-slate-900 text-slate-100"
+          : "bg-white text-slate-900 border border-slate-200"
+      }`}>
       <header className="space-y-1">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-          Docstree
+        <div className="flex items-center justify-between">
+          <p
+            className={`text-xs uppercase tracking-[0.2em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+            Docstree
+          </p>
+          <button
+            aria-label="Toggle theme"
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+              isDark
+                ? "border border-slate-700 bg-slate-800 text-slate-100 hover:border-slate-500"
+                : "border border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400"
+            }`}
+            onClick={() => {
+              const next = isDark ? "light" : "dark"
+              setTheme(next)
+              localStorage.setItem("docstree:theme", next)
+            }}>
+            {isDark ? "☀️ Light" : "🌙 Dark"}
+          </button>
+        </div>
+        <h1 className="text-2xl font-semibold">Drive structure viewer</h1>
+        <p
+          className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+          Sign in to pull your Drive files. Use the search box to filter by
+          name. (Mock data remains in{" "}
+          <code className="font-mono">/data/mockDrive.ts</code> for offline
+          dev.)
         </p>
       </header>
 
       <div className="flex items-center gap-3">
         {initializingAuth ? (
-          <span className="text-sm text-slate-400">Checking session...</span>
+          <span
+            className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+            Checking session...
+          </span>
         ) : authToken ? (
           <>
-            <span className="rounded-full bg-emerald-900/60 px-3 py-1 text-xs font-semibold text-emerald-200">
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                isDark
+                  ? "bg-emerald-900/60 text-emerald-200"
+                  : "bg-emerald-100 text-emerald-800"
+              }`}>
               Connected
             </span>
             <button
-              className="ml-auto rounded-lg border border-slate-700 px-3 py-2 text-sm font-medium text-slate-100 transition hover:border-slate-500"
+              className={`ml-auto rounded-lg px-3 py-2 text-sm font-medium transition ${
+                isDark
+                  ? "border border-slate-700 text-slate-100 hover:border-slate-500"
+                  : "border border-slate-300 text-slate-900 hover:border-slate-400"
+              }`}
               onClick={handleSignOut}>
               Sign out
             </button>
@@ -216,15 +300,27 @@ function IndexPopup() {
       </div>
 
       {error ? (
-        <p className="rounded-lg border border-red-900 bg-red-950/40 p-2 text-sm text-red-200">
+        <p
+          className={`rounded-lg border p-2 text-sm ${
+            isDark
+              ? "border-red-900 bg-red-950/40 text-red-200"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}>
           {error}
         </p>
       ) : null}
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-200">Search</span>
+        <span
+          className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-slate-700"}`}>
+          Search
+        </span>
         <input
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-base text-slate-100 outline-none ring-2 ring-transparent transition focus:border-slate-500 focus:ring-slate-500"
+          className={`w-full rounded-lg px-3 py-2 text-base outline-none ring-2 ring-transparent transition ${
+            isDark
+              ? "border border-slate-700 bg-slate-800 text-slate-100 focus:border-slate-500 focus:ring-slate-500"
+              : "border border-slate-300 bg-white text-slate-900 focus:border-slate-500 focus:ring-slate-200"
+          }`}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name..."
           value={query}
@@ -232,19 +328,29 @@ function IndexPopup() {
       </label>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-slate-400">
+        <div
+          className={`flex items-center justify-between text-xs uppercase tracking-[0.15em] ${
+            isDark ? "text-slate-400" : "text-slate-500"
+          }`}>
           <span>Root</span>
-          <span className="text-slate-500">
+          <span className={isDark ? "text-slate-500" : "text-slate-600"}>
             Choose My Drive or a shared drive
           </span>
         </div>
         <select
-          className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-slate-500"
+          className={`w-full rounded-lg px-3 py-2 text-sm outline-none transition ${
+            isDark
+              ? "border border-slate-700 bg-slate-800 text-slate-100 focus:border-slate-500"
+              : "border border-slate-300 bg-white text-slate-900 focus:border-slate-500"
+          }`}
           disabled={!authToken}
           onChange={(e) => {
             const value = e.target.value || null
             setSelectedDriveId(value)
-            localStorage.setItem("docstree:selectedDriveId", value || "my-drive")
+            localStorage.setItem(
+              "docstree:selectedDriveId",
+              value || "my-drive"
+            )
           }}
           value={selectedDriveId || ""}>
           <option value="">My Drive</option>
@@ -256,8 +362,16 @@ function IndexPopup() {
         </select>
       </div>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-        <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-slate-400">
+      <section
+        className={`rounded-xl border p-4 ${
+          isDark
+            ? "border-slate-800 bg-slate-950/40"
+            : "border-slate-200 bg-slate-50"
+        }`}>
+        <div
+          className={`flex items-center justify-between text-xs uppercase tracking-[0.15em] ${
+            isDark ? "text-slate-400" : "text-slate-600"
+          }`}>
           <span>Drive files (live)</span>
           {loading ? (
             <span className="text-amber-200">Loading...</span>
@@ -272,9 +386,14 @@ function IndexPopup() {
             </p>
           )}
           {authToken && !loading && driveFiles.length === 0 ? (
-            <p className="text-sm text-slate-500">No files returned yet.</p>
+            <p
+              className={`text-sm ${isDark ? "text-slate-500" : "text-slate-600"}`}>
+              No files returned yet.
+            </p>
           ) : null}
-          {filteredTree.length > 0 ? <Tree nodes={filteredTree} /> : null}
+          {filteredTree.length > 0 ? (
+            <Tree isDark={isDark} nodes={filteredTree} />
+          ) : null}
         </div>
       </section>
     </div>
