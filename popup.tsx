@@ -28,17 +28,15 @@ const Tree = ({
   isDark: boolean
 }) => (
   <ul
-    className={`space-y-2 border-l border-slate-800 pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
+    className={`space-y-2 border-l border-border pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
     {nodes.map((node) => (
       <li key={node.id} className="space-y-1">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <span className="text-slate-500">
+        <div className="flex items-center gap-2 text-sm font-medium text-ink">
+          <span className="text-ink-weak">
             {node.type === "folder" ? "📁" : "📄"}
           </span>
           <a
-            className={`truncate underline-offset-4 hover:underline ${
-              isDark ? "text-slate-100" : "text-slate-900"
-            }`}
+            className="truncate text-ink underline-offset-4 hover:underline"
             href={node.url}
             rel="noreferrer"
             target="_blank">
@@ -202,6 +200,14 @@ function IndexPopup() {
     }
     checkExistingAuth()
   }, [])
+  useEffect(() => {
+    const root = document.documentElement
+    if (theme === "dark") {
+      root.classList.add("dark")
+    } else {
+      root.classList.remove("dark")
+    }
+  }, [theme])
 
   const handleSignIn = async () => {
     setError(null)
@@ -227,25 +233,15 @@ function IndexPopup() {
   }
 
   return (
-    <div
-      className={`min-w-[360px] max-w-sm space-y-4 rounded-2xl p-5 shadow-xl ${
-        isDark
-          ? "bg-slate-900 text-slate-100"
-          : "bg-white text-slate-900 border border-slate-200"
-      }`}>
+    <div className="min-w-[360px] max-w-sm space-y-4 rounded-2xl bg-surface p-5 text-ink shadow-pop ring-1 ring-border">
       <header className="space-y-1">
         <div className="flex items-center justify-between">
-          <p
-            className={`text-xs uppercase tracking-[0.2em] ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+          <p className="text-xs uppercase tracking-[0.2em] text-ink-weak">
             Docstree
           </p>
           <button
             aria-label="Toggle theme"
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-              isDark
-                ? "border border-slate-700 bg-slate-800 text-slate-100 hover:border-slate-500"
-                : "border border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400"
-            }`}
+            className="rounded-full border border-border bg-surface-weak px-3 py-1 text-xs font-semibold text-ink transition hover:border-ink-weak"
             onClick={() => {
               const next = isDark ? "light" : "dark"
               setTheme(next)
@@ -254,45 +250,26 @@ function IndexPopup() {
             {isDark ? "☀️ Light" : "🌙 Dark"}
           </button>
         </div>
-        <h1 className="text-2xl font-semibold">Drive structure viewer</h1>
-        <p
-          className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-          Sign in to pull your Drive files. Use the search box to filter by
-          name. (Mock data remains in{" "}
-          <code className="font-mono">/data/mockDrive.ts</code> for offline
-          dev.)
-        </p>
       </header>
 
       <div className="flex items-center gap-3">
         {initializingAuth ? (
-          <span
-            className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-            Checking session...
-          </span>
+          <span className="text-sm text-ink-weak">Checking session...</span>
         ) : authToken ? (
           <>
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                isDark
-                  ? "bg-emerald-900/60 text-emerald-200"
-                  : "bg-emerald-100 text-emerald-800"
-              }`}>
+              className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-ink">
               Connected
             </span>
             <button
-              className={`ml-auto rounded-lg px-3 py-2 text-sm font-medium transition ${
-                isDark
-                  ? "border border-slate-700 text-slate-100 hover:border-slate-500"
-                  : "border border-slate-300 text-slate-900 hover:border-slate-400"
-              }`}
+              className="ml-auto rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition hover:border-ink-weak"
               onClick={handleSignOut}>
               Sign out
             </button>
           </>
         ) : (
           <button
-            className="ml-auto rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-900 transition hover:bg-emerald-400"
+            className="ml-auto rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-emerald-400"
             onClick={handleSignIn}>
             Sign in with Google
           </button>
@@ -300,27 +277,15 @@ function IndexPopup() {
       </div>
 
       {error ? (
-        <p
-          className={`rounded-lg border p-2 text-sm ${
-            isDark
-              ? "border-red-900 bg-red-950/40 text-red-200"
-              : "border-red-200 bg-red-50 text-red-800"
-          }`}>
+        <p className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </p>
       ) : null}
 
       <label className="block space-y-2">
-        <span
-          className={`text-sm font-medium ${isDark ? "text-slate-200" : "text-slate-700"}`}>
-          Search
-        </span>
+        <span className="text-sm font-medium text-ink-weak">Search</span>
         <input
-          className={`w-full rounded-lg px-3 py-2 text-base outline-none ring-2 ring-transparent transition ${
-            isDark
-              ? "border border-slate-700 bg-slate-800 text-slate-100 focus:border-slate-500 focus:ring-slate-500"
-              : "border border-slate-300 bg-white text-slate-900 focus:border-slate-500 focus:ring-slate-200"
-          }`}
+          className="w-full rounded-lg border border-border bg-surface-weak px-3 py-2 text-base text-ink outline-none ring-2 ring-transparent transition hover:border-ink-weak focus:border-ink-weak focus:ring-ink-weak"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name..."
           value={query}
@@ -328,21 +293,12 @@ function IndexPopup() {
       </label>
 
       <div className="space-y-2">
-        <div
-          className={`flex items-center justify-between text-xs uppercase tracking-[0.15em] ${
-            isDark ? "text-slate-400" : "text-slate-500"
-          }`}>
+        <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
           <span>Root</span>
-          <span className={isDark ? "text-slate-500" : "text-slate-600"}>
-            Choose My Drive or a shared drive
-          </span>
+          <span className="text-ink-weak">Choose My Drive or a shared drive</span>
         </div>
         <select
-          className={`w-full rounded-lg px-3 py-2 text-sm outline-none transition ${
-            isDark
-              ? "border border-slate-700 bg-slate-800 text-slate-100 focus:border-slate-500"
-              : "border border-slate-300 bg-white text-slate-900 focus:border-slate-500"
-          }`}
+          className="w-full rounded-lg border border-border bg-surface-weak px-3 py-2 text-sm text-ink outline-none transition hover:border-ink-weak focus:border-ink-weak"
           disabled={!authToken}
           onChange={(e) => {
             const value = e.target.value || null
@@ -362,16 +318,8 @@ function IndexPopup() {
         </select>
       </div>
 
-      <section
-        className={`rounded-xl border p-4 ${
-          isDark
-            ? "border-slate-800 bg-slate-950/40"
-            : "border-slate-200 bg-slate-50"
-        }`}>
-        <div
-          className={`flex items-center justify-between text-xs uppercase tracking-[0.15em] ${
-            isDark ? "text-slate-400" : "text-slate-600"
-          }`}>
+      <section className="rounded-xl border border-border bg-surface-weak p-4 text-ink">
+        <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
           <span>Drive files (live)</span>
           {loading ? (
             <span className="text-amber-200">Loading...</span>
@@ -381,15 +329,10 @@ function IndexPopup() {
         </div>
         <div className="mt-3 space-y-2">
           {!authToken && (
-            <p className="text-sm text-slate-500">
-              Sign in to load your Drive files.
-            </p>
+            <p className="text-sm text-ink-weak">Sign in to load your Drive files.</p>
           )}
           {authToken && !loading && driveFiles.length === 0 ? (
-            <p
-              className={`text-sm ${isDark ? "text-slate-500" : "text-slate-600"}`}>
-              No files returned yet.
-            </p>
+            <p className="text-sm text-ink-weak">No files returned yet.</p>
           ) : null}
           {filteredTree.length > 0 ? (
             <Tree isDark={isDark} nodes={filteredTree} />
