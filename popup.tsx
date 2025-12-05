@@ -70,6 +70,7 @@ function IndexPopup() {
   const [error, setError] = useState<string | null>(null)
   const [initializingAuth, setInitializingAuth] = useState(true)
   const [theme, setTheme] = useState<"dark" | "light">("dark")
+  const [menuOpen, setMenuOpen] = useState(false)
   const isDark = theme === "dark"
 
   const tree = useMemo(() => {
@@ -272,51 +273,88 @@ function IndexPopup() {
 
   return (
     <div className="min-w-[360px] max-w-sm space-y-4 rounded-2xl bg-surface p-5 text-ink shadow-pop ring-1 ring-border">
-      <header className="space-y-1">
+      <header className="relative">
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase tracking-[0.2em] text-ink-weak">
             Docstree
           </p>
           <button
-            aria-label="Toggle theme"
-            data-testid="theme-toggle"
-            className="rounded-full border border-border bg-surface-weak px-3 py-1 text-xs font-semibold text-ink transition hover:border-ink-weak"
-            onClick={() => {
-              const next = isDark ? "light" : "dark"
-              setTheme(next)
-              localStorage.setItem("docstree:theme", next)
-            }}>
-            {isDark ? "☀️ Light" : "🌙 Dark"}
+            aria-label="Open menu"
+            data-testid="menu-toggle"
+            className="rounded-lg border border-border bg-surface-weak p-2 text-ink transition hover:border-ink-weak"
+            onClick={() => setMenuOpen(!menuOpen)}>
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
           </button>
         </div>
-      </header>
 
-      <div className="flex items-center gap-3">
-        {initializingAuth ? (
-          <span className="text-sm text-ink-weak">Checking session...</span>
-        ) : authToken ? (
-          <>
-            <span
-              data-testid="status-connected"
-              className="rounded-full border border-accent bg-accent/20 px-3 py-1 text-xs font-semibold text-accent">
-              Connected
-            </span>
-            <button
-              data-testid="sign-out-btn"
-              className="ml-auto rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition hover:border-ink-weak"
-              onClick={handleSignOut}>
-              Sign out
-            </button>
-          </>
-        ) : (
-          <button
-            data-testid="sign-in-btn"
-            className="ml-auto rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-emerald-400"
-            onClick={handleSignIn}>
-            Sign in with Google
-          </button>
+        {menuOpen && (
+          <div
+            className="absolute right-0 top-10 z-10 w-48 rounded-lg border border-border bg-surface p-2 shadow-lg"
+            data-testid="menu-dropdown">
+            {initializingAuth ? (
+              <p className="px-3 py-2 text-sm text-ink-weak">
+                Checking session...
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <span
+                    data-testid="status-indicator"
+                    className={`h-2 w-2 rounded-full ${authToken ? "bg-accent" : "bg-ink-weak"}`}
+                  />
+                  <span className="text-sm text-ink">
+                    {authToken ? "Connected" : "Not connected"}
+                  </span>
+                </div>
+                <hr className="my-1 border-border" />
+                {authToken ? (
+                  <button
+                    data-testid="sign-out-btn"
+                    className="w-full rounded-md px-3 py-2 text-left text-sm text-ink transition hover:bg-surface-weak"
+                    onClick={() => {
+                      handleSignOut()
+                      setMenuOpen(false)
+                    }}>
+                    Sign out
+                  </button>
+                ) : (
+                  <button
+                    data-testid="sign-in-btn"
+                    className="w-full rounded-md px-3 py-2 text-left text-sm text-ink transition hover:bg-surface-weak"
+                    onClick={() => {
+                      handleSignIn()
+                      setMenuOpen(false)
+                    }}>
+                    Sign in with Google
+                  </button>
+                )}
+                <hr className="my-1 border-border" />
+                <button
+                  data-testid="theme-toggle"
+                  className="w-full rounded-md px-3 py-2 text-left text-sm text-ink transition hover:bg-surface-weak"
+                  onClick={() => {
+                    const next = isDark ? "light" : "dark"
+                    setTheme(next)
+                    localStorage.setItem("docstree:theme", next)
+                  }}>
+                  {isDark ? "Light mode" : "Dark mode"}
+                </button>
+              </>
+            )}
+          </div>
         )}
-      </div>
+      </header>
 
       {error ? (
         <p
