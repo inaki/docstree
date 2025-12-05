@@ -34,13 +34,14 @@
       "128": "assets/icon.png"
     },
     "permissions": [
-      "identity"
+      "identity",
+      "storage"
     ],
     "host_permissions": [
       "https://*/*"
     ],
     "oauth2": {
-      "client_id": "71158390476-hehmhetnp05psg1idi8lkvg40roha7q5.apps.googleusercontent.com",
+      "client_id": "71158390476-hmjlu4vamjp30a4ldnr2pegmnahhh7fd.apps.googleusercontent.com",
       "scopes": [
         "https://www.googleapis.com/auth/drive.readonly"
       ]

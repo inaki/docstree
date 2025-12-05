@@ -175,8 +175,6 @@ function IndexPopup() {
   useEffect(() => {
     const checkExistingAuth = async () => {
       try {
-        const token = await getAuthToken(false)
-        setAuthToken(token)
         const storedDrive = localStorage.getItem("docstree:selectedDriveId")
         if (storedDrive) {
           setSelectedDriveId(storedDrive === "my-drive" ? null : storedDrive)
@@ -197,8 +195,34 @@ function IndexPopup() {
             // ignore parse errors
           }
         }
+
+        // Check for stored token in chrome.storage first, then fall back to getAuthToken
+        console.log("[AUTH] Checking for stored token...")
+        const storedToken = await new Promise<string | null>((resolve) => {
+          chrome.storage.local.get("docstree:authToken", (result) => {
+            console.log("[AUTH] chrome.storage.local result:", result)
+            resolve(result["docstree:authToken"] || null)
+          })
+        })
+        console.log("[AUTH] storedToken from chrome.storage:", storedToken ? "EXISTS" : "NULL")
+
+        if (storedToken) {
+          console.log("[AUTH] Using stored token")
+          setAuthToken(storedToken)
+        } else {
+          console.log("[AUTH] No stored token, trying getAuthToken(false)...")
+          const token = await getAuthToken(false)
+          console.log("[AUTH] getAuthToken(false) result:", token ? "EXISTS" : "NULL")
+          if (token) {
+            setAuthToken(token)
+            console.log("[AUTH] Saving token to chrome.storage...")
+            chrome.storage.local.set({ "docstree:authToken": token }, () => {
+              console.log("[AUTH] Token saved to chrome.storage")
+            })
+          }
+        }
       } catch (err) {
-        // no cached token, ignore
+        console.error("[AUTH] Error during auth check:", err)
       } finally {
         setInitializingAuth(false)
       }
@@ -271,7 +295,12 @@ function IndexPopup() {
     setError(null)
     try {
       const token = await getAuthToken(true)
-      setAuthToken(token)
+      if (token) {
+        setAuthToken(token)
+        chrome.storage.local.set({ "docstree:authToken": token })
+      } else {
+        setError("No token returned from Google")
+      }
     } catch (err) {
       setError((err as Error).message)
     }
@@ -287,6 +316,7 @@ function IndexPopup() {
     } finally {
       setAuthToken(null)
       setDriveFiles([])
+      chrome.storage.local.remove("docstree:authToken")
     }
   }
 
