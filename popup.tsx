@@ -39,6 +39,7 @@ function IndexPopup() {
   const [selectedDriveId, setSelectedDriveId] = useState<string | null>(null) // null = My Drive
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [initializingAuth, setInitializingAuth] = useState(true)
 
   const tree = useMemo(() => {
     const rootId = selectedDriveId || "root"
@@ -142,6 +143,24 @@ function IndexPopup() {
     fetchDrives()
   }, [authToken])
 
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        const token = await getAuthToken(false)
+        setAuthToken(token)
+        const storedDrive = localStorage.getItem("docstree:selectedDriveId")
+        if (storedDrive) {
+          setSelectedDriveId(storedDrive === "my-drive" ? null : storedDrive)
+        }
+      } catch (err) {
+        // no cached token, ignore
+      } finally {
+        setInitializingAuth(false)
+      }
+    }
+    checkExistingAuth()
+  }, [])
+
   const handleSignIn = async () => {
     setError(null)
     try {
@@ -174,7 +193,9 @@ function IndexPopup() {
       </header>
 
       <div className="flex items-center gap-3">
-        {authToken ? (
+        {initializingAuth ? (
+          <span className="text-sm text-slate-400">Checking session...</span>
+        ) : authToken ? (
           <>
             <span className="rounded-full bg-emerald-900/60 px-3 py-1 text-xs font-semibold text-emerald-200">
               Connected
@@ -220,7 +241,11 @@ function IndexPopup() {
         <select
           className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-slate-500"
           disabled={!authToken}
-          onChange={(e) => setSelectedDriveId(e.target.value || null)}
+          onChange={(e) => {
+            const value = e.target.value || null
+            setSelectedDriveId(value)
+            localStorage.setItem("docstree:selectedDriveId", value || "my-drive")
+          }}
           value={selectedDriveId || ""}>
           <option value="">My Drive</option>
           {drives.map((drive) => (
