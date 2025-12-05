@@ -9,6 +9,8 @@
 # testing
 /coverage
 
+/secrets
+
 # misc
 .DS_Store
 *.pem

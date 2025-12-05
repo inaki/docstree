@@ -34,7 +34,7 @@
       "https://*/*"
     ],
     "oauth2": {
-      "client_id": "1025158487066-elbu5su3nc020murau44ietj9leg8m2.apps.googleusercontent.com",
+      "client_id": "71158390476-hehmhetnp05psg1idi8lkvg40roha7q5.apps.googleusercontent.com",
       "scopes": [
         "https://www.googleapis.com/auth/drive.readonly"
       ]
