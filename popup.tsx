@@ -21,11 +21,15 @@ type TreeNode = {
 const Tree = ({
   nodes,
   depth = 0,
-  isDark
+  isDark,
+  favorites,
+  onToggleFavorite
 }: {
   nodes: TreeNode[]
   depth?: number
   isDark: boolean
+  favorites: Set<string>
+  onToggleFavorite: (node: TreeNode) => void
 }) => (
   <ul
     className={`space-y-2 border-l border-border pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
@@ -35,16 +39,20 @@ const Tree = ({
           <span className="text-ink-weak">
             {node.type === "folder" ? "📁" : "📄"}
           </span>
-          <a
-            className="truncate text-ink underline-offset-4 hover:underline"
-            href={node.url}
-            rel="noreferrer"
-            target="_blank">
+          <a className="truncate text-ink underline-offset-4 hover:underline" href={node.url} rel="noreferrer" target="_blank">
             {node.name}
           </a>
+          <button
+            aria-label={`Favorite ${node.name}`}
+            className="ml-auto rounded-full px-2 text-sm text-ink-weak transition hover:text-accent"
+            data-testid={`favorite-toggle-${node.id}`}
+            onClick={() => onToggleFavorite(node)}
+            type="button">
+            {favorites.has(node.id) ? "★" : "☆"}
+          </button>
         </div>
         {node.children && node.children.length > 0 ? (
-          <Tree nodes={node.children} depth={depth + 1} />
+          <Tree favorites={favorites} nodes={node.children} depth={depth + 1} onToggleFavorite={onToggleFavorite} isDark={isDark} />
         ) : null}
       </li>
     ))}
@@ -57,6 +65,7 @@ function IndexPopup() {
   const [driveFiles, setDriveFiles] = useState<DriveFile[]>([])
   const [drives, setDrives] = useState<SharedDrive[]>([])
   const [selectedDriveId, setSelectedDriveId] = useState<string | null>(null) // null = My Drive
+  const [favorites, setFavorites] = useState<Record<string, TreeNode>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [initializingAuth, setInitializingAuth] = useState(true)
@@ -107,39 +116,12 @@ function IndexPopup() {
     return roots
   }, [driveFiles, selectedDriveId])
 
-  const filteredTree = useMemo(() => {
-    if (!query) return tree
-    const q = query.toLowerCase()
-    const filterNodes = (nodes: TreeNode[]): TreeNode[] =>
-      nodes
-        .map((node) => {
-          const nameMatch = node.name.toLowerCase().includes(q)
-          if (nameMatch) return node
-          const filteredChildren = node.children
-            ? filterNodes(node.children)
-            : []
-          if (filteredChildren.length > 0)
-            return { ...node, children: filteredChildren }
-          return null
-        })
-        .filter(Boolean) as TreeNode[]
-    return filterNodes(tree)
-  }, [query, tree])
-
-  const flattenFiltered = useMemo(() => {
-    const out: TreeNode[] = []
-    const walk = (nodes: TreeNode[]) => {
-      nodes.forEach((n) => {
-        out.push(n)
-        if (n.children) walk(n.children)
-      })
-    }
-    walk(filteredTree)
-    return out
-  }, [filteredTree])
-
   useEffect(() => {
     const fetchFiles = async () => {
+      if (selectedDriveId === "favorites") {
+        setLoading(false)
+        return
+      }
       if (!authToken) {
         setDriveFiles([])
         return
@@ -192,6 +174,15 @@ function IndexPopup() {
         if (storedTheme === "dark" || storedTheme === "light") {
           setTheme(storedTheme)
         }
+        const storedFavorites = localStorage.getItem("docstree:favorites")
+        if (storedFavorites) {
+          try {
+            const parsed = JSON.parse(storedFavorites) as Record<string, TreeNode>
+            setFavorites(parsed)
+          } catch {
+            // ignore parse errors
+          }
+        }
       } catch (err) {
         // no cached token, ignore
       } finally {
@@ -208,6 +199,53 @@ function IndexPopup() {
       root.classList.remove("dark")
     }
   }, [theme])
+
+  const favoriteSet = useMemo(() => new Set(Object.keys(favorites)), [favorites])
+
+  const toggleFavorite = (node: TreeNode) => {
+    setFavorites((prev) => {
+      const next = { ...prev }
+      if (next[node.id]) {
+        delete next[node.id]
+      } else {
+        next[node.id] = { ...node, children: undefined }
+      }
+      localStorage.setItem("docstree:favorites", JSON.stringify(next))
+      return next
+    })
+  }
+
+  const favoritesTree = useMemo(() => Object.values(favorites), [favorites])
+
+  const sourceTree = selectedDriveId === "favorites" ? favoritesTree : tree
+
+  const filteredTree = useMemo(() => {
+    if (!query) return sourceTree
+    const q = query.toLowerCase()
+    const filterNodes = (nodes: TreeNode[]): TreeNode[] =>
+      nodes
+        .map((node) => {
+          const nameMatch = node.name.toLowerCase().includes(q)
+          if (nameMatch) return node
+          const filteredChildren = node.children ? filterNodes(node.children) : []
+          if (filteredChildren.length > 0) return { ...node, children: filteredChildren }
+          return null
+        })
+        .filter(Boolean) as TreeNode[]
+    return filterNodes(sourceTree)
+  }, [query, sourceTree])
+
+  const flattenFiltered = useMemo(() => {
+    const out: TreeNode[] = []
+    const walk = (nodes: TreeNode[]) => {
+      nodes.forEach((n) => {
+        out.push(n)
+        if (n.children) walk(n.children)
+      })
+    }
+    walk(filteredTree)
+    return out
+  }, [filteredTree])
 
   const handleSignIn = async () => {
     setError(null)
@@ -322,6 +360,9 @@ function IndexPopup() {
               {drive.name}
             </option>
           ))}
+          {Object.keys(favorites).length > 0 ? (
+            <option value="favorites">Favorites</option>
+          ) : null}
         </select>
       </div>
 
@@ -346,7 +387,7 @@ function IndexPopup() {
             <p className="text-sm text-ink-weak">No files returned yet.</p>
           ) : null}
           {filteredTree.length > 0 ? (
-            <Tree isDark={isDark} nodes={filteredTree} />
+            <Tree favorites={favoriteSet} isDark={isDark} nodes={filteredTree} onToggleFavorite={toggleFavorite} />
           ) : null}
         </div>
       </section>
