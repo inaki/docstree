@@ -1,8 +1,8 @@
 {
   "name": "docstree",
-  "displayName": "Docstree",
-  "version": "0.0.1",
-  "description": "is a simple google drive file structure viewer",
+  "displayName": "Docstree - Google Drive Tree Viewer",
+  "version": "1.0.0",
+  "description": "View your Google Drive files as a tree structure. Browse, search, and favorite files from My Drive and Shared Drives.",
   "author": "inaki",
   "scripts": {
     "dev": "plasmo dev",
@@ -25,5 +25,26 @@
     "tailwindcss": "^3.4.1",
     "typescript": "5.3.3",
     "postcss": "^8.4.35"
+  },
+  "manifest": {
+    "icons": {
+      "16": "assets/icon16.png",
+      "32": "assets/icon32.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    },
+    "permissions": [
+      "identity",
+      "storage"
+    ],
+    "host_permissions": [
+      "https://www.googleapis.com/*"
+    ],
+    "oauth2": {
+      "client_id": "71158390476-hmjlu4vamjp30a4ldnr2pegmnahhh7fd.apps.googleusercontent.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/drive.readonly"
+      ]
+    }
   }
 }

@@ -197,32 +197,23 @@ function IndexPopup() {
         }
 
         // Check for stored token in chrome.storage first, then fall back to getAuthToken
-        console.log("[AUTH] Checking for stored token...")
         const storedToken = await new Promise<string | null>((resolve) => {
           chrome.storage.local.get("docstree:authToken", (result) => {
-            console.log("[AUTH] chrome.storage.local result:", result)
             resolve(result["docstree:authToken"] || null)
           })
         })
-        console.log("[AUTH] storedToken from chrome.storage:", storedToken ? "EXISTS" : "NULL")
 
         if (storedToken) {
-          console.log("[AUTH] Using stored token")
           setAuthToken(storedToken)
         } else {
-          console.log("[AUTH] No stored token, trying getAuthToken(false)...")
           const token = await getAuthToken(false)
-          console.log("[AUTH] getAuthToken(false) result:", token ? "EXISTS" : "NULL")
           if (token) {
             setAuthToken(token)
-            console.log("[AUTH] Saving token to chrome.storage...")
-            chrome.storage.local.set({ "docstree:authToken": token }, () => {
-              console.log("[AUTH] Token saved to chrome.storage")
-            })
+            chrome.storage.local.set({ "docstree:authToken": token })
           }
         }
       } catch (err) {
-        console.error("[AUTH] Error during auth check:", err)
+        // no cached token, ignore
       } finally {
         setInitializingAuth(false)
       }
