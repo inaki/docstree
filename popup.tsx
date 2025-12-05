@@ -83,10 +83,9 @@ function IndexPopup() {
       nodes
         .map((node) => {
           const nameMatch = node.name.toLowerCase().includes(q)
+          if (nameMatch) return node
           const filteredChildren = node.children ? filterNodes(node.children) : []
-          if (nameMatch || filteredChildren.length > 0) {
-            return { ...node, children: filteredChildren }
-          }
+          if (filteredChildren.length > 0) return { ...node, children: filteredChildren }
           return null
         })
         .filter(Boolean) as TreeNode[]
