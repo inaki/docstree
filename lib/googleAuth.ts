@@ -1,10 +1,11 @@
 // OAuth helpers using chrome.identity.launchWebAuthFlow (cross-browser friendly)
 // NOTE: Use a Web Application OAuth client and set redirect URI to:
 // https://<EXTENSION_ID>.chromiumapp.org/
-// Update CLIENT_ID with your Web OAuth client ID.
-
+// Update CLIENT_ID with your Web OAuth client ID via env:
+// PLASMO_PUBLIC_GOOGLE_CLIENT_ID=... in .env.local
 const CLIENT_ID =
-  "71158390476-hmjlu4vamjp30a4ldnr2pegmnahhh7fd.apps.googleusercontent.com"
+  process.env.PLASMO_PUBLIC_GOOGLE_CLIENT_ID ||
+  "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
 const SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 const buildAuthUrl = (redirectUri: string) => {

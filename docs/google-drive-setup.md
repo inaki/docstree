@@ -31,17 +31,11 @@ Step-by-step to enable Google Sign-In and Drive API for this extension.
 
 ## 5) Wire the client ID and scopes into the manifest
 
-- In `package.json`, set `manifest.oauth2.client_id` to your client ID.
-- Ensure scopes include Drive read access:
-
-```json
-"oauth2": {
-  "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
-  "scopes": ["https://www.googleapis.com/auth/drive.readonly"]
-}
-```
-
-- Keep `permissions: ["identity"]` in the manifest. Host permissions already allow Google APIs.
+- Copy `.env.example` to `.env.local` and set `PLASMO_PUBLIC_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com`.
+- `plasmo/manifest.ts` reads that env var and sets the OAuth client and scopes:
+  - Scope default: `https://www.googleapis.com/auth/drive.readonly`
+  - Permissions: `["identity", "storage"]`
+  - Host permissions already allow Google APIs.
 
 ## 6) Load the extension for development
 

@@ -25,26 +25,5 @@
     "tailwindcss": "^3.4.1",
     "typescript": "5.3.3",
     "postcss": "^8.4.35"
-  },
-  "manifest": {
-    "icons": {
-      "16": "assets/icon.png",
-      "32": "assets/icon.png",
-      "48": "assets/icon.png",
-      "128": "assets/icon.png"
-    },
-    "permissions": [
-      "identity",
-      "storage"
-    ],
-    "host_permissions": [
-      "https://*/*"
-    ],
-    "oauth2": {
-      "client_id": "71158390476-hmjlu4vamjp30a4ldnr2pegmnahhh7fd.apps.googleusercontent.com",
-      "scopes": [
-        "https://www.googleapis.com/auth/drive.readonly"
-      ]
-    }
   }
 }
