@@ -31,7 +31,7 @@ const Tree = ({
     className={`space-y-2 border-l border-border pl-3 ${depth === 0 ? "border-l-0 pl-0" : ""}`}>
     {nodes.map((node) => (
       <li key={node.id} className="space-y-1">
-        <div className="flex items-center gap-2 text-sm font-medium text-ink">
+        <div className="flex items-center gap-2 text-sm font-normal text-ink">
           <span className="text-ink-weak">
             {node.type === "folder" ? "📁" : "📄"}
           </span>
@@ -241,6 +241,7 @@ function IndexPopup() {
           </p>
           <button
             aria-label="Toggle theme"
+            data-testid="theme-toggle"
             className="rounded-full border border-border bg-surface-weak px-3 py-1 text-xs font-semibold text-ink transition hover:border-ink-weak"
             onClick={() => {
               const next = isDark ? "light" : "dark"
@@ -258,10 +259,12 @@ function IndexPopup() {
         ) : authToken ? (
           <>
             <span
-              className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-ink">
+              data-testid="status-connected"
+              className="rounded-full border border-accent bg-accent/20 px-3 py-1 text-xs font-semibold text-accent">
               Connected
             </span>
             <button
+              data-testid="sign-out-btn"
               className="ml-auto rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition hover:border-ink-weak"
               onClick={handleSignOut}>
               Sign out
@@ -269,6 +272,7 @@ function IndexPopup() {
           </>
         ) : (
           <button
+            data-testid="sign-in-btn"
             className="ml-auto rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-ink transition hover:bg-emerald-400"
             onClick={handleSignIn}>
             Sign in with Google
@@ -277,7 +281,9 @@ function IndexPopup() {
       </div>
 
       {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+        <p
+          data-testid="error-banner"
+          className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
           {error}
         </p>
       ) : null}
@@ -285,6 +291,7 @@ function IndexPopup() {
       <label className="block space-y-2">
         <span className="text-sm font-medium text-ink-weak">Search</span>
         <input
+          data-testid="search-input"
           className="w-full rounded-lg border border-border bg-surface-weak px-3 py-2 text-base text-ink outline-none ring-2 ring-transparent transition hover:border-ink-weak focus:border-ink-weak focus:ring-ink-weak"
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name..."
@@ -295,9 +302,9 @@ function IndexPopup() {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
           <span>Root</span>
-          <span className="text-ink-weak">Choose My Drive or a shared drive</span>
         </div>
         <select
+          data-testid="root-select"
           className="w-full rounded-lg border border-border bg-surface-weak px-3 py-2 text-sm text-ink outline-none transition hover:border-ink-weak focus:border-ink-weak"
           disabled={!authToken}
           onChange={(e) => {
@@ -318,7 +325,9 @@ function IndexPopup() {
         </select>
       </div>
 
-      <section className="rounded-xl border border-border bg-surface-weak p-4 text-ink">
+      <section
+        className="rounded-xl border border-border bg-surface-weak p-4 text-ink"
+        data-testid="drive-tree">
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
           <span>Drive files (live)</span>
           {loading ? (
@@ -329,7 +338,9 @@ function IndexPopup() {
         </div>
         <div className="mt-3 space-y-2">
           {!authToken && (
-            <p className="text-sm text-ink-weak">Sign in to load your Drive files.</p>
+            <p className="text-sm text-ink-weak">
+              Sign in to load your Drive files.
+            </p>
           )}
           {authToken && !loading && driveFiles.length === 0 ? (
             <p className="text-sm text-ink-weak">No files returned yet.</p>
