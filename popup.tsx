@@ -239,6 +239,11 @@ function IndexPopup() {
       const next = { ...prev }
       if (next[node.id]) {
         delete next[node.id]
+        // If we removed the last favorite and we're viewing favorites, switch to My Drive
+        if (Object.keys(next).length === 0 && selectedDriveId === "favorites") {
+          setSelectedDriveId(null)
+          localStorage.setItem("docstree:selectedDriveId", "my-drive")
+        }
       } else {
         next[node.id] = { ...node, children: undefined }
       }
@@ -308,6 +313,23 @@ function IndexPopup() {
       setAuthToken(null)
       setDriveFiles([])
       chrome.storage.local.remove("docstree:authToken")
+    }
+  }
+
+  const handleRefresh = async () => {
+    if (!authToken || selectedDriveId === "favorites") return
+    setLoading(true)
+    setError(null)
+    try {
+      const files = await listDriveFiles(
+        authToken,
+        selectedDriveId || undefined
+      )
+      setDriveFiles(files)
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -448,8 +470,32 @@ function IndexPopup() {
         className="rounded-xl border border-border bg-surface-weak p-4 text-ink"
         data-testid="drive-tree">
         <div className="flex items-center justify-between text-xs uppercase tracking-[0.15em] text-ink-weak">
-          <span>Drive files (live)</span>
-          {!loading && <span>{flattenFiltered.length} items</span>}
+          <span>Drive files</span>
+          <div className="flex items-center gap-2">
+            {!loading && <span>{flattenFiltered.length} items</span>}
+            {authToken && selectedDriveId !== "favorites" && (
+              <button
+                aria-label="Refresh files"
+                data-testid="refresh-btn"
+                className="rounded p-1 text-ink-weak transition hover:bg-surface hover:text-ink disabled:opacity-50"
+                disabled={loading}
+                onClick={handleRefresh}
+                type="button">
+                <svg
+                  className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
         <div className="mt-3 space-y-2">
           {!authToken && (
